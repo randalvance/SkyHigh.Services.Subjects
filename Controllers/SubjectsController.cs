@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using RabbitMQ.Client;
 using SkyHigh.Services.Students.Repositories;
 using SkyHigh.Services.Subjects.Models;
 
@@ -25,17 +28,30 @@ namespace SkyHigh.Services.Subjects.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post([FromBody]Subject student)
+        public async Task<ActionResult> Post([FromBody]Subject subject)
         {
-            await this.subjectRepository.AddAsync(student);
+            await this.subjectRepository.AddAsync(subject);
 
-            return this.Created("", student); // TODO: generate resource link
+            var factory = new ConnectionFactory() { HostName = "localhost" };
+
+            using (var connection = factory.CreateConnection())
+            using (var channel = connection.CreateModel())
+            {
+                channel.ExchangeDeclare(exchange: "subjects", type: "fanout");
+
+                string json = JsonConvert.SerializeObject(subject);
+                var body = Encoding.UTF8.GetBytes(json);
+
+                channel.BasicPublish(exchange: "subjects", routingKey: "", basicProperties: null, body: body);
+            }
+
+            return this.Created("", subject); // TODO: generate resource link
         }
 
         [HttpDelete]
-        public async Task<ActionResult> Delete(int studentId)
+        public async Task<ActionResult> Delete(int subjectId)
         {
-            await this.subjectRepository.DeleteAsync(studentId);
+            await this.subjectRepository.DeleteAsync(subjectId);
 
             return this.Ok();
         }
