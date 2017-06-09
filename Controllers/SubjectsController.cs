@@ -20,11 +20,11 @@ namespace SkyHigh.Services.Subjects.Controllers
         {
             this.subjectRepository = subjectRepository;
         }
-        
+
         [HttpGet]
-        public async  Task<IEnumerable<Subject>> Get()
+        public async Task<IEnumerable<Subject>> Get(string searchTerm = "")
         {
-            return await this.subjectRepository.ListAsync();
+            return await this.subjectRepository.ListAsync(searchTerm);
         }
 
         [HttpPost]
