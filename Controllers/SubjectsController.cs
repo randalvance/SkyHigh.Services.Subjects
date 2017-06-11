@@ -32,7 +32,7 @@ namespace SkyHigh.Services.Subjects.Controllers
         {
             await this.subjectRepository.AddAsync(subject);
 
-            var factory = new ConnectionFactory() { HostName = "localhost" };
+            var factory = new ConnectionFactory() { HostName = "rabbitmq" };
 
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
