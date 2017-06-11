@@ -4,10 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using SkyHigh.Services.Students.Repositories;
 using SkyHigh.Services.Subjects.Models;
+using SkyHigh.Services.Subjects.Options;
 
 namespace SkyHigh.Services.Subjects.Controllers
 {
@@ -15,10 +17,12 @@ namespace SkyHigh.Services.Subjects.Controllers
     public class SubjectsController : Controller
     {
         private SubjectRepository subjectRepository;
+        private EndpointOptions endpointOptions;
 
-        public SubjectsController(SubjectRepository subjectRepository)
+        public SubjectsController(SubjectRepository subjectRepository, IOptions<EndpointOptions> endpointOptions)
         {
             this.subjectRepository = subjectRepository;
+            this.endpointOptions = endpointOptions.Value;
         }
 
         [HttpGet]
@@ -32,7 +36,7 @@ namespace SkyHigh.Services.Subjects.Controllers
         {
             await this.subjectRepository.AddAsync(subject);
 
-            var factory = new ConnectionFactory() { HostName = "rabbitmq" };
+            var factory = new ConnectionFactory() { HostName = this.endpointOptions.RabbitMqHostname };
 
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
