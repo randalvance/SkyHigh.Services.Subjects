@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
@@ -18,11 +19,13 @@ namespace SkyHigh.Services.Subjects.Controllers
     {
         private SubjectRepository subjectRepository;
         private EndpointOptions endpointOptions;
+        private ILogger<SubjectsController> logger;
 
-        public SubjectsController(SubjectRepository subjectRepository, IOptions<EndpointOptions> endpointOptions)
+        public SubjectsController(SubjectRepository subjectRepository, IOptions<EndpointOptions> endpointOptions, ILogger<SubjectsController> logger)
         {
             this.subjectRepository = subjectRepository;
             this.endpointOptions = endpointOptions.Value;
+            this.logger = logger;
         }
 
         [HttpGet]
@@ -36,7 +39,9 @@ namespace SkyHigh.Services.Subjects.Controllers
         {
             await this.subjectRepository.AddAsync(subject);
 
-            var factory = new ConnectionFactory() { HostName = this.endpointOptions.RabbitMqHostname };
+            this.logger.LogWarning($"Rabbit MQ Endpoint {this.endpointOptions.RabbitMqHostname}");
+            
+            var factory = new ConnectionFactory() { HostName = this.endpointOptions.RabbitMqHostname, Port = AmqpTcpEndpoint.UseDefaultPort };
 
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
